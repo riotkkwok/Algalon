@@ -38,7 +38,7 @@ module.exports = {
         // 要求或禁止块内填充
         "padded-blocks": [1, {"blocks": "never"}], 
         // 一行代码最大长度
-        "max-len": [1, {"code": 100, "ignoreStrings": true, "ignoreRegExpLiterals": true, "ignoreComments": true}],
+        "max-len": [1, {"code": 150, "ignoreStrings": true, "ignoreRegExpLiterals": true, "ignoreComments": true}],
         "no-trailing-spaces": [1, {"ignoreComments": true}],
     }
 };
