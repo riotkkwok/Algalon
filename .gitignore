@@ -1,0 +1,2 @@
+/src/url/*.json
+!/src/url/index.json
