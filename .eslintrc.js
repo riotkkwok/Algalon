@@ -1,4 +1,4 @@
-{
+module.exports = {
     "env": {
         "es6": true,
         "node": true,
@@ -25,6 +25,8 @@
             "error",
             "always"
         ],
-        "no-console": "off"
+        "no-console": 0,
+        // 运算符 两侧要加空格
+        "space-infix-ops": 1
     }
-}
+};
