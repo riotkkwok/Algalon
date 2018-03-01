@@ -111,10 +111,12 @@ const ts = setInterval(function () {
     isRunning = true;
     console.log('start to load "' + currentUrl + '"');
     page.open(currentUrl, function (status) {
+        const loadTime = Date.now() - startTime;
         console.log('Status: ' + status);
         if (status === 'success') {
             // page.render('yycom.png');
-            console.log('Loading time: ' + (Date.now() - startTime) + 'ms.');
+            console.log('Page Loading time: ' + loadTime + 'ms.');
+            overall[currentUrl].loadTime = loadTime;
         } else {
             console.log('Fail to load "' + currentUrl + '"');
         }
