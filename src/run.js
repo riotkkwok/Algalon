@@ -5,7 +5,7 @@ const page = require('webpage').create(),
 
 const prgStartAt = Date.now();
 
-const resObj = {}, overall = {};
+const resObj = {}, resIdList = [], overall = {};
 
 var currentUrl = '';
 
@@ -58,6 +58,7 @@ page.onResourceRequested = function (request) {
         };
     }
     overall[currentUrl].resTotal++;
+    resIdList.push(request.id);
 };
 page.onResourceReceived = function (response) {
     // console.log('Response ' + JSON.stringify(response, undefined, 4));
@@ -84,29 +85,32 @@ page.onResourceReceived = function (response) {
             }, undefined, 4));
             overall[currentUrl].resSlow++;
         }
+        removeItemFromList(resIdList, response.id);
     }
 };
 page.onResourceError = function (response) {
-    console.log('Error: ' + JSON.stringify(response, undefined, 4));
-    overall[currentUrl].resErr++;
+    if (resObj[response.id]) {
+        console.log('Error: ' + JSON.stringify(response, undefined, 4));
+        overall[currentUrl].resErr++;
+        removeItemFromList(resIdList, response.id);
+    }
 };
 page.onResourceTimeout = function (response) {
-    console.log('Timeout Error: ' + JSON.stringify(response, undefined, 4));
-    overall[currentUrl].resTO++;
+    if (resObj[response.id]) {
+        console.log('Timeout Error: ' + JSON.stringify(response, undefined, 4));
+        overall[currentUrl].resTO++;
+        removeItemFromList(resIdList, response.id);
+    }
 };
 
-var i = 0, isRunning = false, isWaiting = 0;
+var i = 0, isRunning = false;
 
 const ts = setInterval(function () {
-    if (isRunning) {
+    if (isRunning || resIdList.length !== 0) {
         return;
     }
     if (pageUrls.urls.length <= i) {
         ending();
-    }
-    if (isWaiting > 0) {
-        isWaiting--;
-        return;
     }
     currentUrl = pageUrls.defaultProtocol + pageUrls.urls[i];
     const startTime = Date.now();
@@ -126,17 +130,25 @@ const ts = setInterval(function () {
             console.log('Fail to load "' + currentUrl + '"');
         }
         isRunning = false;
-        isWaiting = 2;
         i++;
     });
 }, 2000);
+
+function removeItemFromList(ls, item) {
+    const index = ls.indexOf(item);
+    if (index >= 0) {
+        ls.splice(index, 1);
+    }
+}
 
 function ending() {
     clearInterval(ts);
     if (overall) {
         console.log(JSON.stringify(overall, undefined, 4));
     }
+    const prgEndAt = Date.now();
     console.log('Program starts at: ' + prgStartAt);
-    console.log('Program ends at: ' + Date.now());
+    console.log('Program ends at: ' + prgEndAt);
+    console.log('Program takes: ' + (prgEndAt - prgStartAt));
     phantom.exit();
 }
