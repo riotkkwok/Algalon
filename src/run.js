@@ -3,10 +3,25 @@ console.log('Start...');
 const page = require('webpage').create(),
     system = require('system');
 
+const prgStartAt = Date.now();
+
+const resObj = {}, overall = {};
+
+var currentUrl = '';
+
 if (system.args.length === 1 || !/^[a-zA-Z0-9_.-]+$/g.test(system.args[1])) {
     console.log('Invalid args. ');
-    phantom.exit();
+    ending();
 }
+
+const pageUrls = function () {
+    try {
+        return require('./url/' + system.args[1] + '.json');
+    } catch (e) {
+        console.error('Invalid url config file.');
+        ending();
+    }
+}();
 
 phantom.onerror = function (msg, trace) {
     var msgStack = ['PHANTOM ERROR: ' + msg];
@@ -17,21 +32,8 @@ phantom.onerror = function (msg, trace) {
         });
     }
     console.error(msgStack.join('\n'));
-    phantom.exit(1);
+    ending();
 };
-
-const pageUrls = function () {
-    try {
-        return require('./url/' + system.args[1] + '.json');
-    } catch (e) {
-        console.error('Invalid url config file.');
-        phantom.exit(1);
-    }
-}();
-
-const resObj = {}, overall = {};
-
-var currentUrl = '';
 
 console.log(JSON.stringify(pageUrls, undefined, 4));
 
@@ -111,11 +113,14 @@ const ts = setInterval(function () {
     isRunning = true;
     console.log('start to load "' + currentUrl + '"');
     page.open(currentUrl, function (status) {
-        const loadTime = Date.now() - startTime;
+        const nowTime = Date.now();
+        const loadTime = nowTime - startTime;
         console.log('Status: ' + status);
         if (status === 'success') {
             // page.render('yycom.png');
             console.log('Page Loading time: ' + loadTime + 'ms.');
+            overall[currentUrl].startAt = startTime;
+            overall[currentUrl].endAt = nowTime;
             overall[currentUrl].loadTime = loadTime;
         } else {
             console.log('Fail to load "' + currentUrl + '"');
@@ -128,6 +133,10 @@ const ts = setInterval(function () {
 
 function ending() {
     clearInterval(ts);
-    console.log(JSON.stringify(overall, undefined, 4));
+    if (overall) {
+        console.log(JSON.stringify(overall, undefined, 4));
+    }
+    console.log('Program starts at: ' + prgStartAt);
+    console.log('Program ends at: ' + Date.now());
     phantom.exit();
 }
