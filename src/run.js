@@ -39,6 +39,11 @@ console.log(JSON.stringify(pageUrls, undefined, 4));
 
 console.log('The default user agent is ' + page.settings.userAgent);
 
+page.viewportSize = {
+    width: 1920,
+    height: 1080
+};
+
 page.onResourceRequested = function (request) {
     // console.log('Request ' + JSON.stringify(request, undefined, 4));
     if (/(hiido|baidu).+\.gif/.test(request.url)) {
@@ -132,6 +137,9 @@ const ts = setInterval(function () {
         isRunning = false;
         i++;
     });
+    setTimeout(function() {
+        page.render(currentUrl.replace(/^http(s)?:\/\//, '') + '.png');
+    }, 800);
 }, 2000);
 
 function removeItemFromList(ls, item) {
