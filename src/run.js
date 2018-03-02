@@ -1,7 +1,8 @@
 console.log('Start...');
 
 const page = require('webpage').create(),
-    system = require('system');
+    system = require('system'),
+    report = require('./report.js');
 
 const prgStartAt = Date.now();
 
@@ -10,15 +11,16 @@ const resObj = {}, resIdList = [], overall = {};
 var currentUrl = '';
 
 if (system.args.length === 1 || !/^[a-zA-Z0-9_.-]+$/g.test(system.args[1])) {
-    console.log('Invalid args. ');
+    report.put('Invalid args. ', 'E');
     ending();
 }
 
 const pageUrls = function () {
     try {
+        report.setUrlName(system.args[1]);
         return require('./url/' + system.args[1] + '.json');
     } catch (e) {
-        console.error('Invalid url config file.');
+        report.put('Invalid url config file.', 'E');
         ending();
     }
 }();
@@ -35,9 +37,9 @@ phantom.onerror = function (msg, trace) {
     ending();
 };
 
-console.log(JSON.stringify(pageUrls, undefined, 4));
+report.put(JSON.stringify(pageUrls, undefined, 4), 'I');
 
-console.log('The default user agent is ' + page.settings.userAgent);
+report.put('The default user agent is ' + page.settings.userAgent);
 
 page.viewportSize = {
     width: 1920,
@@ -78,9 +80,9 @@ page.onResourceReceived = function (response) {
         resObj[response.id].downloadDur = resObj[response.id].endTime - resObj[response.id].downloadTime;
         overall[currentUrl].avgDuration = ((overall[currentUrl].resSuc - 1) * overall[currentUrl].avgDuration + resObj[response.id].overallDur)
             / overall[currentUrl].resSuc;
-        if (resObj[response.id].overallDur > 200) { // 文件下载结束
+        if (resObj[response.id].overallDur > 500) { // 文件下载结束
             // console.log('Loading Overtime: ' + resObj[response.id].duration + 'ms ==== ' + response.url);
-            console.log(JSON.stringify({
+            report.put(JSON.stringify({
                 filePath: response.url,
                 contentType: response.contentType,
                 size: resObj[response.id].size,
@@ -95,14 +97,14 @@ page.onResourceReceived = function (response) {
 };
 page.onResourceError = function (response) {
     if (resObj[response.id]) {
-        console.log('Error: ' + JSON.stringify(response, undefined, 4));
+        report.put('Error: ' + JSON.stringify(response, undefined, 4), 'E');
         overall[currentUrl].resErr++;
         removeItemFromList(resIdList, response.id);
     }
 };
 page.onResourceTimeout = function (response) {
     if (resObj[response.id]) {
-        console.log('Timeout Error: ' + JSON.stringify(response, undefined, 4));
+        report.put('Timeout Error: ' + JSON.stringify(response, undefined, 4), 'E');
         overall[currentUrl].resTO++;
         removeItemFromList(resIdList, response.id);
     }
@@ -120,19 +122,19 @@ const ts = setInterval(function () {
     currentUrl = pageUrls.defaultProtocol + pageUrls.urls[i];
     const startTime = Date.now();
     isRunning = true;
-    console.log('start to load "' + currentUrl + '"');
+    report.put('start to load "' + currentUrl + '"');
     page.open(currentUrl, function (status) {
         const nowTime = Date.now();
         const loadTime = nowTime - startTime;
-        console.log('Status: ' + status);
+        report.put('Status: ' + status);
         if (status === 'success') {
             // page.render('yycom.png');
-            console.log('Page Loading time: ' + loadTime + 'ms.');
+            report.put('Page Loading time: ' + loadTime + 'ms.');
             overall[currentUrl].startAt = startTime;
             overall[currentUrl].endAt = nowTime;
             overall[currentUrl].loadTime = loadTime;
         } else {
-            console.log('Fail to load "' + currentUrl + '"');
+            report.put('Fail to load "' + currentUrl + '"', 'E');
         }
         isRunning = false;
         i++;
@@ -156,11 +158,12 @@ function renderScreencap() {
 function ending() {
     clearInterval(ts);
     if (overall) {
-        console.log(JSON.stringify(overall, undefined, 4));
+        report.put(JSON.stringify(overall, undefined, 4), 'I');
     }
     const prgEndAt = Date.now();
-    console.log('Program starts at: ' + prgStartAt);
-    console.log('Program ends at: ' + prgEndAt);
-    console.log('Program takes: ' + (prgEndAt - prgStartAt));
+    report.put('Program starts at: ' + prgStartAt, 'I');
+    report.put('Program ends at: ' + prgEndAt, 'I');
+    report.put('Program takes: ' + (prgEndAt - prgStartAt), 'I');
+    report.write();
     phantom.exit();
 }
