@@ -21,18 +21,22 @@ function putStr(str, mode) {
 }
 
 function writeFile() {
-    const now = Date.now();
+    const now = new Date();
     try {
         if (content !== '' && content.length > 0) {
             content.replace();
-            fs.write('./report/log/' + name + '_' + now + '.log', content);
+            fs.write('./report/log/' + name + '__' + dateFormat(now) + '.log', content);
         }
         if (contentErr !== '' && contentErr.length > 0) {
-            fs.write('./report/error/' + name + '_' + now + '.log', contentErr);
+            fs.write('./report/error/' + name + '__' + dateFormat(now) + '.log', contentErr);
         }
     } catch (e) {
         console.error(e);
     }
+}
+
+function dateFormat(d) {
+    return (d.getFullYear() + '-' + (d.getMonth() + 1) + '-' +  d.getDate() + '_' + d.getHours() + '-' + d.getMinutes() + '-' + d.getSeconds()).replace(/\b([0-9]{1})\b/g, '0$1').replace(/-/g, '');
 }
 
 module.exports = {
