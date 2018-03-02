@@ -48,7 +48,7 @@ page.viewportSize = {
 
 page.onResourceRequested = function (request) {
     // console.log('Request ' + JSON.stringify(request, undefined, 4));
-    if (/(hiido|baidu).+\.gif/.test(request.url)) {
+    if (/(hiido|baidu).+\.gif/.test(request.url) || request.url.match(/^about:blank$/)) {
         return;
     }
     resObj[request.id] = {};
