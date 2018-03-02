@@ -137,9 +137,7 @@ const ts = setInterval(function () {
         isRunning = false;
         i++;
     });
-    setTimeout(function() {
-        page.render(currentUrl.replace(/^http(s)?:\/\//, '') + '.png');
-    }, 800);
+    setTimeout(renderScreencap, 800);
 }, 2000);
 
 function removeItemFromList(ls, item) {
@@ -147,6 +145,12 @@ function removeItemFromList(ls, item) {
     if (index >= 0) {
         ls.splice(index, 1);
     }
+}
+
+function renderScreencap() {
+    const folder = currentUrl.replace(pageUrls.defaultProtocol, '').split('/')[0],
+        file = currentUrl.replace(pageUrls.defaultProtocol + folder, '').replace(/\//g, '@') || '__';
+    page.render('screen/' + folder + '/' + file + '.png');
 }
 
 function ending() {
