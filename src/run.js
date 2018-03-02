@@ -6,9 +6,9 @@ const page = require('webpage').create(),
 
 const prgStartAt = Date.now();
 
-const resObj = {}, resIdList = [], overall = {};
+const resIdList = [], overall = {};
 
-var currentUrl = '';
+var resObj, currentUrl = '';
 
 if (system.args.length === 1 || !/^[a-zA-Z0-9_.-]+$/g.test(system.args[1])) {
     report.put('Invalid args. ', 'E');
@@ -48,12 +48,13 @@ page.viewportSize = {
 
 page.onResourceRequested = function (request) {
     // console.log('Request ' + JSON.stringify(request, undefined, 4));
-    if (/(hiido|baidu).+\.gif/.test(request.url) || request.url.match(/^about:blank$/)) {
+    if (/(hiido|baidu).+\.gif/.test(request.url) || /^about:blank$/.test(request.url) || /^data:/.test(request.url)) {
         return;
     }
     resObj[request.id] = {};
     resObj[request.id].startTime = new Date(request.time);
     resObj[request.id].url = request.url;
+    resObj.urls.push(request.url);
     if (!overall[currentUrl]) {
         overall[currentUrl] = {
             resTotal: 0,
@@ -116,11 +117,17 @@ const ts = setInterval(function () {
     if (isRunning || resIdList.length !== 0) {
         return;
     }
+    if (resObj) {
+        report.put(JSON.stringify(resObj.urls, undefined, 4));
+    }
     if (pageUrls.urls.length <= i) {
         ending();
     }
     currentUrl = pageUrls.defaultProtocol + pageUrls.urls[i];
     const startTime = Date.now();
+    resObj = {
+        urls: []
+    };
     isRunning = true;
     report.put('start to load "' + currentUrl + '"');
     page.open(currentUrl, function (status) {
