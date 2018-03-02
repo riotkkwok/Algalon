@@ -1,3 +1,4 @@
 /src/url/*.json
 !/src/url/index.json
 /screen/
+/report/
