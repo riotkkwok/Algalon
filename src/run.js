@@ -6,24 +6,23 @@ const page = require('webpage').create(),
 
 const prgStartAt = Date.now();
 
-const resIdList = [], overall = {};
+const resIdList = [], overall = {
+    resTotal: 0,
+    resSuc: 0,
+    resSlow: 0,
+    resErr: 0,
+    resTO: 0,
+    avgDuration: 0
+};
 
-var resObj, currentUrl = '';
+var resObj = {
+    urls: []
+};
 
-if (system.args.length === 1 || !/^[a-zA-Z0-9_.-]+$/g.test(system.args[1])) {
-    report.put('Invalid args. ', 'E');
-    ending();
-}
+const currentUrl = system.args[1],
+    urlName = system.args[2];
 
-const pageUrls = function () {
-    try {
-        report.setUrlName(system.args[1]);
-        return require('./url/' + system.args[1] + '.json');
-    } catch (e) {
-        report.put('Invalid url config file.', 'E');
-        ending();
-    }
-}();
+report.setUrlName(urlName);
 
 phantom.onerror = function (msg, trace) {
     var msgStack = ['PHANTOM ERROR: ' + msg];
@@ -36,8 +35,6 @@ phantom.onerror = function (msg, trace) {
     console.error(msgStack.join('\n'));
     ending();
 };
-
-report.put(JSON.stringify(pageUrls, undefined, 4), 'I');
 
 report.put('The default user agent is ' + page.settings.userAgent);
 
@@ -55,17 +52,7 @@ page.onResourceRequested = function (request) {
     resObj[request.id].startTime = new Date(request.time);
     resObj[request.id].url = request.url;
     resObj.urls.push(request.url);
-    if (!overall[currentUrl]) {
-        overall[currentUrl] = {
-            resTotal: 0,
-            resSuc: 0,
-            resSlow: 0,
-            resErr: 0,
-            resTO: 0,
-            avgDuration: 0
-        };
-    }
-    overall[currentUrl].resTotal++;
+    overall.resTotal++;
     resIdList.push(request.id);
 };
 page.onResourceReceived = function (response) {
@@ -75,12 +62,12 @@ page.onResourceReceived = function (response) {
         resObj[response.id].size = response.bodySize;
     } else if (resObj[response.id] && response.stage === 'end') {
         resObj[response.id].endTime = new Date(response.time);
-        overall[currentUrl].resSuc++;
+        overall.resSuc++;
         resObj[response.id].overallDur = resObj[response.id].endTime - resObj[response.id].startTime;
         resObj[response.id].waitingDur = resObj[response.id].downloadTime - resObj[response.id].startTime;
         resObj[response.id].downloadDur = resObj[response.id].endTime - resObj[response.id].downloadTime;
-        overall[currentUrl].avgDuration = ((overall[currentUrl].resSuc - 1) * overall[currentUrl].avgDuration + resObj[response.id].overallDur)
-            / overall[currentUrl].resSuc;
+        overall.avgDuration = ((overall.resSuc - 1) * overall.avgDuration + resObj[response.id].overallDur)
+            / overall.resSuc;
         if (resObj[response.id].overallDur > 500) { // 文件下载结束
             // console.log('Loading Overtime: ' + resObj[response.id].duration + 'ms ==== ' + response.url);
             report.put(JSON.stringify({
@@ -91,7 +78,7 @@ page.onResourceReceived = function (response) {
                 waitingTime: resObj[response.id].waitingDur,
                 downloadTime: resObj[response.id].downloadDur
             }, undefined, 4));
-            overall[currentUrl].resSlow++;
+            overall.resSlow++;
         }
         removeItemFromList(resIdList, response.id);
     }
@@ -99,54 +86,48 @@ page.onResourceReceived = function (response) {
 page.onResourceError = function (response) {
     if (resObj[response.id]) {
         report.put('Error: ' + JSON.stringify(response, undefined, 4), 'E');
-        overall[currentUrl].resErr++;
+        overall.resErr++;
         removeItemFromList(resIdList, response.id);
     }
 };
 page.onResourceTimeout = function (response) {
     if (resObj[response.id]) {
         report.put('Timeout Error: ' + JSON.stringify(response, undefined, 4), 'E');
-        overall[currentUrl].resTO++;
+        overall.resTO++;
         removeItemFromList(resIdList, response.id);
     }
 };
 
-var i = 0, isRunning = false;
+var isRunning = true;
+const startTime = Date.now();
+report.put('start to load "' + currentUrl + '"');
+page.open(currentUrl, function (status) {
+    const nowTime = Date.now();
+    const loadTime = nowTime - startTime;
+    report.put('Status: ' + status);
+    if (status === 'success') {
+        // page.render('yycom.png');
+        report.put('Page Loading time: ' + loadTime + 'ms.');
+        overall.startAt = startTime;
+        overall.endAt = nowTime;
+        overall.loadTime = loadTime;
+    } else {
+        report.put('Fail to load "' + currentUrl + '"', 'E');
+    }
+    isRunning = false;
+});
+setTimeout(renderScreencap, 1000);
 
 const ts = setInterval(function () {
     if (isRunning || resIdList.length !== 0) {
         return;
-    }
-    if (resObj) {
-        report.put(JSON.stringify(resObj.urls, undefined, 4));
-    }
-    if (pageUrls.urls.length <= i) {
-        ending();
-    }
-    currentUrl = pageUrls.defaultProtocol + pageUrls.urls[i];
-    const startTime = Date.now();
-    resObj = {
-        urls: []
-    };
-    isRunning = true;
-    report.put('start to load "' + currentUrl + '"');
-    page.open(currentUrl, function (status) {
-        const nowTime = Date.now();
-        const loadTime = nowTime - startTime;
-        report.put('Status: ' + status);
-        if (status === 'success') {
-            // page.render('yycom.png');
-            report.put('Page Loading time: ' + loadTime + 'ms.');
-            overall[currentUrl].startAt = startTime;
-            overall[currentUrl].endAt = nowTime;
-            overall[currentUrl].loadTime = loadTime;
-        } else {
-            report.put('Fail to load "' + currentUrl + '"', 'E');
+    } else {
+        if (resObj) {
+            report.put(JSON.stringify(resObj.urls, undefined, 4));
         }
-        isRunning = false;
-        i++;
-    });
-    setTimeout(renderScreencap, 800);
+        ending();
+        return;
+    }
 }, 2000);
 
 function removeItemFromList(ls, item) {
@@ -157,8 +138,8 @@ function removeItemFromList(ls, item) {
 }
 
 function renderScreencap() {
-    const folder = currentUrl.replace(pageUrls.defaultProtocol, '').split('/')[0],
-        file = currentUrl.replace(pageUrls.defaultProtocol + folder, '').replace(/\//g, '@') || '__';
+    const folder = currentUrl.replace(/^http(s)?:\/\//, '').split('/')[0],
+        file = currentUrl.replace(new RegExp('^http(s)?://' + folder), '').replace(/\//g, '@') || '__';
     page.render('screen/' + folder + '/' + file + '.png');
 }
 
