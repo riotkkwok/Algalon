@@ -22,7 +22,10 @@ var resObj = {
 const currentUrl = system.args[1],
     urlName = system.args[2];
 
-report.setUrlName(urlName);
+report.setConfig({
+    url: currentUrl,
+    name: urlName
+});
 
 phantom.onerror = function (msg, trace) {
     var msgStack = ['PHANTOM ERROR: ' + msg];

@@ -1,9 +1,15 @@
 const fs = require('fs');
 
-var content = '', contentErr = '', name = '';
+var content = '', contentErr = '';
 
-function setUrlName(n) {
-    name = n;
+const config = {
+    name: '',
+    url: ''
+};
+
+function setConfig(opt) {
+    config.name = opt.name;
+    config.url = opt.url;
 }
 
 function putStr(str, mode) {
@@ -24,10 +30,11 @@ function writeFile() {
     const now = new Date();
     try {
         if (content !== '' && content.length > 0) {
-            fs.write('./report/log/' + name + '__' + dateFormat(now) + '.log', content, 'w');
+            fs.write('./report/log/' + config.name + '__' + dateFormat(now) + '.log', content, 'w');
         }
         if (contentErr !== '' && contentErr.length > 0) {
-            fs.write('./report/error/' + name + '__' + dateFormat(now) + '.log', contentErr, 'w');
+            contentErr = 'URL -- ' + config.url + '\r\n\r\n' + contentErr;
+            fs.write('./report/error/' + config.name + '__' + dateFormat(now) + '.log', contentErr, 'w');
         }
     } catch (e) {
         console.error(e);
@@ -39,7 +46,7 @@ function dateFormat(d) {
 }
 
 module.exports = {
-    setUrlName: setUrlName,
+    setConfig: setConfig,
     put: putStr,
     write: writeFile
 };
