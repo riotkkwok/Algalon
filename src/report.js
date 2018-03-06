@@ -24,11 +24,10 @@ function writeFile() {
     const now = new Date();
     try {
         if (content !== '' && content.length > 0) {
-            content.replace();
-            fs.write('./report/log/' + name + '__' + dateFormat(now) + '.log', content);
+            fs.write('./report/log/' + name + '__' + dateFormat(now) + '.log', content, 'w');
         }
         if (contentErr !== '' && contentErr.length > 0) {
-            fs.write('./report/error/' + name + '__' + dateFormat(now) + '.log', contentErr);
+            fs.write('./report/error/' + name + '__' + dateFormat(now) + '.log', contentErr, 'w');
         }
     } catch (e) {
         console.error(e);
