@@ -69,7 +69,7 @@ page.onResourceReceived = function (response) {
         resObj[response.id].downloadDur = resObj[response.id].endTime - resObj[response.id].downloadTime;
         overall.avgDuration = ((overall.resSuc - 1) * overall.avgDuration + resObj[response.id].overallDur)
             / overall.resSuc;
-        if (resObj[response.id].overallDur > 500) { // 文件下载结束
+        if (resObj[response.id].overallDur > 2000) { // 文件下载结束
             report.put(JSON.stringify({
                 filePath: response.url,
                 contentType: response.contentType,
