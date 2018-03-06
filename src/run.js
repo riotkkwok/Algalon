@@ -44,7 +44,6 @@ page.viewportSize = {
 };
 
 page.onResourceRequested = function (request) {
-    // console.log('Request ' + JSON.stringify(request, undefined, 4));
     if (/(hiido|baidu).+\.gif/.test(request.url) || /^about:blank$/.test(request.url) || /^data:/.test(request.url)) {
         return;
     }
@@ -56,7 +55,6 @@ page.onResourceRequested = function (request) {
     resIdList.push(request.id);
 };
 page.onResourceReceived = function (response) {
-    // console.log('Response ' + JSON.stringify(response, undefined, 4));
     if (resObj[response.id] && response.stage === 'start') { // 开始传输数据
         resObj[response.id].downloadTime = new Date(response.time);
         resObj[response.id].size = response.bodySize;
@@ -69,7 +67,6 @@ page.onResourceReceived = function (response) {
         overall.avgDuration = ((overall.resSuc - 1) * overall.avgDuration + resObj[response.id].overallDur)
             / overall.resSuc;
         if (resObj[response.id].overallDur > 500) { // 文件下载结束
-            // console.log('Loading Overtime: ' + resObj[response.id].duration + 'ms ==== ' + response.url);
             report.put(JSON.stringify({
                 filePath: response.url,
                 contentType: response.contentType,
@@ -80,21 +77,21 @@ page.onResourceReceived = function (response) {
             }, undefined, 4));
             overall.resSlow++;
         }
-        removeItemFromList(resIdList, response.id);
+        removeItemFromList(resIdList, response.id, 'end');
     }
 };
 page.onResourceError = function (response) {
     if (resObj[response.id]) {
         report.put('Error: ' + JSON.stringify(response, undefined, 4), 'E');
         overall.resErr++;
-        removeItemFromList(resIdList, response.id);
+        removeItemFromList(resIdList, response.id, 'err');
     }
 };
 page.onResourceTimeout = function (response) {
     if (resObj[response.id]) {
         report.put('Timeout Error: ' + JSON.stringify(response, undefined, 4), 'E');
         overall.resTO++;
-        removeItemFromList(resIdList, response.id);
+        removeItemFromList(resIdList, response.id, 'tout');
     }
 };
 
@@ -106,7 +103,6 @@ page.open(currentUrl, function (status) {
     const loadTime = nowTime - startTime;
     report.put('Status: ' + status);
     if (status === 'success') {
-        // page.render('yycom.png');
         report.put('Page Loading time: ' + loadTime + 'ms.');
         overall.startAt = startTime;
         overall.endAt = nowTime;
@@ -116,7 +112,6 @@ page.open(currentUrl, function (status) {
     }
     isRunning = false;
 });
-setTimeout(renderScreencap, 1000);
 
 const ts = setInterval(function () {
     if (isRunning || resIdList.length !== 0) {
@@ -125,12 +120,14 @@ const ts = setInterval(function () {
         if (resObj) {
             report.put(JSON.stringify(resObj.urls, undefined, 4));
         }
+        resObj = null;
+        renderScreencap();
         ending();
         return;
     }
 }, 2000);
 
-function removeItemFromList(ls, item) {
+function removeItemFromList(ls, item, state) {
     const index = ls.indexOf(item);
     if (index >= 0) {
         ls.splice(index, 1);
