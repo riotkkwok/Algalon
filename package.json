@@ -1,0 +1,15 @@
+{
+    "name": "Algalon",
+    "version": "0.1.0",
+    "description": "website monitor",
+    "dependencies": {
+        "nodemailer": "^4.6.2",
+        "chokidar": "^2.0.2"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/riotkkwok/Algalon.git"
+    },
+    "author": "riotkkwok",
+    "license": "MIT"
+}
