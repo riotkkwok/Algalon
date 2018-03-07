@@ -1,4 +1,8 @@
-const exec = require('child_process').exec;
+const exec = require('child_process').exec,
+    chokidar = require('chokidar'),
+    fs = require('fs'),
+    sendMail = require('./src/mail.js'),
+    util = require('./src/util.js');
 
 const urlConfig = process.argv[2],
     mode = (process.argv[3] && process.argv[3].replace(/^-/, '')) || '',
@@ -34,6 +38,13 @@ function main() {
         main();
     });
 }
+
+chokidar.watch('./report/error', {ignoreInitial: true}).on('add', function(path) {
+    fs.readFile(path, function(err, data) {
+        const currentUrl = /^URL -- (.+)\b/.test(data) ? RegExp.$1 : '';
+        sendMail(urlConfig + ' -- ' + currentUrl + '(' + util.dateFormat(new Date()) + ')', data);
+    });
+});
 
 if (mode === 't' && +period > 0) {
     console.log('Loop Task');

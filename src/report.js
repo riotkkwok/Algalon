@@ -1,4 +1,5 @@
-const fs = require('fs');
+const fs = require('fs'),
+    util = require('./util.js');
 
 var content = '', contentErr = '';
 
@@ -30,19 +31,15 @@ function writeFile() {
     const now = new Date();
     try {
         if (content !== '' && content.length > 0) {
-            fs.write('./report/log/' + config.name + '__' + dateFormat(now) + '.log', content, 'w');
+            fs.write('./report/log/' + config.name + '__' + util.dateFormat(now) + '.log', content, 'w');
         }
         if (contentErr !== '' && contentErr.length > 0) {
             contentErr = 'URL -- ' + config.url + '\r\n\r\n' + contentErr;
-            fs.write('./report/error/' + config.name + '__' + dateFormat(now) + '.log', contentErr, 'w');
+            fs.write('./report/error/' + config.name + '__' + util.dateFormat(now) + '.log', contentErr, 'w');
         }
     } catch (e) {
         console.error(e);
     }
-}
-
-function dateFormat(d) {
-    return (d.getFullYear() + '-' + (d.getMonth() + 1) + '-' +  d.getDate() + '.' + d.getHours() + '-' + d.getMinutes() + '-' + d.getSeconds()).replace(/\b([0-9]{1})\b/g, '0$1').replace(/-/g, '').replace(/[.]/g, '_');
 }
 
 module.exports = {

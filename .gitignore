@@ -1,5 +1,6 @@
-/src/url/*.json
-!/src/url/index.json
+/config/mail/
+/config/url/*.json
+!/config/url/index.json
 /screen/
 /report/
 /node_modules/
