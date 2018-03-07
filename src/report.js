@@ -42,7 +42,7 @@ function writeFile() {
 }
 
 function dateFormat(d) {
-    return (d.getFullYear() + '-' + (d.getMonth() + 1) + '-' +  d.getDate() + '_' + d.getHours() + '-' + d.getMinutes() + '-' + d.getSeconds()).replace(/\b([0-9]{1})\b/g, '0$1').replace(/-/g, '');
+    return (d.getFullYear() + '-' + (d.getMonth() + 1) + '-' +  d.getDate() + '.' + d.getHours() + '-' + d.getMinutes() + '-' + d.getSeconds()).replace(/\b([0-9]{1})\b/g, '0$1').replace(/-/g, '').replace(/[.]/g, '_');
 }
 
 module.exports = {
