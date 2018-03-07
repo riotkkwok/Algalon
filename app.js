@@ -8,7 +8,7 @@ if (!urlConfig || !/^[a-zA-Z0-9_.-]+$/g.test(urlConfig)) {
     console.error('Error: Invalid args.');
 }
 
-const pageUrls = require('./src/url/' + urlConfig + '.json'),
+const pageUrls = require('./config/url/' + urlConfig + '.json'),
     cmd = 'phantomjs ./src/run.js';
 
 console.log(JSON.stringify(pageUrls, undefined, 4));
