@@ -1,7 +1,6 @@
 const exec = require('child_process').exec,
     chokidar = require('chokidar'),
     fs = require('fs'),
-    sendMail = require('./src/mail.js'),
     util = require('./src/util.js');
 
 const urlConfig = process.argv[2],
@@ -13,17 +12,22 @@ if (!urlConfig || !/^[a-zA-Z0-9_.-]+$/g.test(urlConfig)) {
 }
 
 const pageUrls = require('./config/url/' + urlConfig + '.json'),
+    sendMail = !!~mode.indexOf('m') && require('./src/mail.js'),
     cmd = 'phantomjs ./src/run.js';
 
 console.log(JSON.stringify(pageUrls, undefined, 4));
 
-let i = -1, ts, taskRunning = false;
+let i = -1, ts, taskRunning = false, watcher;
 
 function main() {
     taskRunning = true;
     i++;
+    if (i === 0) {
+        listenErrFile();
+    }
     if (pageUrls.urls.length <= i) {
         taskRunning = false;
+        stopListenErrFile();
         console.log('Task is finished.\r\n');
         return ;
     }
@@ -39,14 +43,27 @@ function main() {
     });
 }
 
-chokidar.watch('./report/error', {ignoreInitial: true}).on('add', function(path) {
-    fs.readFile(path, function(err, data) {
-        const currentUrl = /^URL -- (.+)\b/.test(data) ? RegExp.$1 : '';
-        sendMail(urlConfig + ' -- ' + currentUrl + '(' + util.dateFormat(new Date()) + ')', data);
+function listenErrFile() {
+    if (!~mode.indexOf('m')) {
+        return;
+    }
+    watcher = chokidar.watch('./report/error', {ignoreInitial: true});
+    watcher.on('add', function(path) {
+        fs.readFile(path, function(err, data) {
+            const currentUrl = /^URL -- (.+)\b/.test(data) ? RegExp.$1 : '';
+            sendMail(urlConfig + ' -- ' + currentUrl + '(' + util.dateFormat(new Date()) + ')', data);
+        });
     });
-});
+}
 
-if (mode === 't' && +period > 0) {
+function stopListenErrFile() {
+    if (!~mode.indexOf('m')) {
+        return;
+    }
+    watcher.close();
+}
+
+if (!!~mode.indexOf('t') && +period > 0) {
     console.log('Loop Task');
     ts = setInterval(function() {
         if (taskRunning) {
