@@ -39,10 +39,15 @@
     }
 
 其中，
+
 host：邮箱提供商的smtp地址
+
 user：发送人邮箱地址
+
 pwd：发送人邮箱密码
+
 mailTo：收件人邮箱地址
+
 title：邮件主题前缀，程序会加上监控的url配置文件名、网页地址以及时间戳，方便辨识
 
 ### Step 4:
@@ -51,12 +56,17 @@ title：邮件主题前缀，程序会加上监控的url配置文件名、网页
 `node app.js [url_config_filename] -[mode] [interval]`
 
 __url_config_filename__ 是对应Step 2设置的配置文件名
+
 __mode__ 目前可选择一下任意或组合的模式
+
     - m, 开启邮件功能模式
     - t, 开启轮询模式
+
 __interval__ 是处在轮询模式下，设置轮询的间隔时间，单位为分钟
 
 #### 例子
+
 `node app.js index -mt 15`
+
 _监控config/url/index.json里面定义的URL，开启右键功能和轮询，每15分钟执行一次_
 
