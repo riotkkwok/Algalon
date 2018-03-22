@@ -42,8 +42,17 @@ function writeFile() {
     }
 }
 
+function writeStatics(ctn) {
+    try {
+        fs.write('./report/statics/' + config.name + '.log', ctn + '\r\n\r\n', 'a');
+    } catch (e) {
+        console.error(e);
+    }
+}
+
 module.exports = {
     setConfig: setConfig,
     put: putStr,
-    write: writeFile
+    write: writeFile,
+    writeStatics: writeStatics
 };
